@@ -1,0 +1,36 @@
+#! usr/bin/env pyrhon
+# -*- coding:utf-8 -*-
+
+__anthor__ = 'HMC'
+
+def max2( a, b ):
+    try:
+        if a>b:
+            return a
+        else:
+            return b
+    except TypeError as e:
+    	print('please input same Type paramater:',e)
+
+def my_max(*ke, **kw):
+    if len(ke) != 0:
+        try:
+            maxresult = ke[0]
+            for eachitem in ke:
+                maxresult = max2 ( maxresult, eachitem )
+            return maxresult
+        except Exception as e:
+            raise e
+    if len(kw) !=0:
+        try:
+            temp = [eachvalue for eachvalue in kw.values()]
+            maxresult = temp[0]
+            for eachitem in temp:
+                maxresult = max2 ( maxresult, eachitem)
+            return maxresult
+        except Exception as e:
+            raise e
+if __name__ == '__main__':
+    kk = {'a':3, 'b':5}
+    ll = [4,8,99]
+    print (my_max(2, 5, 7, *ll, **kk))
