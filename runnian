@@ -1,0 +1,17 @@
+#! usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__anthor__ = 'HMC'
+
+def runnian (x, *ke) :
+    result = []
+    try:
+        if (( x % 4 ==0 ) and (x % 100 != 0 )) or ( x % 400 == 0 ):
+             result.append(x)
+        return result + [i for i in ke if (( i%4 ==0 ) and (i % 100 != 0 )) or ( i % 400 == 0 )]
+        
+    except Exception as e:
+        raise e
+    
+if __name__ == '__main__':
+    print (runnian(*[1990, 2000, 2004, 2100]))
