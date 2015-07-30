@@ -1,0 +1,29 @@
+#! usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__anthor__ = 'HMC'
+
+import os
+from os import path
+
+def cleanFile(fileadd):
+    
+    with open(fileadd, 'r') as f:
+        a = [eachline.strip() for eachline in f ]
+        print ('Do you wanna to create a new file to save new version or cover current version: ')
+        Choice = input('Y/N')
+        if Choice=='Y' or 'y':
+            with open(path.dirname(fileadd)+os.sep+path.basename(fileadd)+'1', 'x') as newfile:
+                for eachline in a:
+                    newfile.write(eachline)
+                
+        else:
+            f.close()
+            with open(fileadd, 'w') as f:
+                for eachline in a:
+                    f.write(eachline)
+            
+
+if __name__ == '__main__':
+    cleanFile(r'c:\hmc.txt')
+        
