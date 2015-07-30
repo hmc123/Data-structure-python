@@ -1,0 +1,15 @@
+! usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__anthor__ = 'HMC'
+
+def myzip (ke,kw):
+    
+    result = map(lambda i, j : (i,j), ke, kw)
+    return result
+    
+
+
+if __name__ == '__main__':
+   re =  myzip( [1,2,3], ['a', 'b'] )
+   print (list(re))
