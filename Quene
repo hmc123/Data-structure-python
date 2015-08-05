@@ -1,0 +1,54 @@
+#! usr/bin/env python
+# -*- coding:utf-8 -*-
+
+__anthor__ = 'HMC'
+
+class Quene():
+
+	def __init__(self, size):
+		self.quene = []
+		self.size = size
+		self.head = 0
+		self.tail = 0
+
+	def Empty(self):
+		if self.head == self.tail:
+			return True
+		else:
+			return False
+	def Full(self):
+		if (self.tail - self.head) == self.size:
+			return True
+		else:
+			return False
+	
+	def enQuene(self, content):
+		if self.Full():
+			print('Quene is full')
+		else:
+			self.quene.append(content)
+			self.tail += 1
+			
+	def outQuene(self):
+		if self.Empty():
+			print('Qune is empty')
+		else:
+			self.quene.pop(0)
+			self.head += 1
+
+if __name__ == '__main__':
+	ll = Quene(3)
+	print('now the head and tail is %d and %d' % (ll.head, ll.tail))
+	ll.enQuene(11)
+	ll.enQuene(22)
+	ll.enQuene(33)
+	ll.outQuene()
+	ll.enQuene(44)
+	print(ll.quene)
+	print('now the head and tail is %d and %d' % (ll.head, ll.tail))
+	ll.outQuene()
+	print('now the head and tail is %d and %d' % (ll.head, ll.tail))
+	ll.outQuene()
+	ll.outQuene()
+	print('now the head and tail is %d and %d' % (ll.head, ll.tail))
+
