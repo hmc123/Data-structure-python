@@ -6,32 +6,34 @@ from lxml import etree
 from multiprocessing.dummy import Pool
 import requests, os, time, os, sys, mysql.connector
 
-def conn_mysql():
+def conn_mysql         #链接数据库
     try:
         conn = mysql.connector.connect(user='root', password='HMC191030', database='douban', use_unicode=True)
     except:
         conn = mysql.connector.connect(user='root', password='HMC191030',  use_unicode=True)
     return conn
 
-def insert_mysql(conn,a, b, c, d):
+def insert_mysql(conn,**result      #插入数据，记得建表设置character set utf8
     cursor = conn.cursor()
     cursor.execute('create table if not exists doubancomment (id int primary key auto_increment, commentdate date,\
-                   username varchar(20), userurl text, commentcontent text) ')
-    cursor.execute('insert into doubancomment (commentdate,username,userurl,commentcontent) values (%s,%s,%s,%s)' % (a,b,c,d))
+                   username varchar(20), userurl text, commentcontent text) character set utf8')
+    insert = 'insert into doubancomment (commentdate,username,userurl,commentcontent) values (%s,%s,%s,%s)'
+    cursor.execute(insert, (result['commentdate'], result['username'], result['userurl'], result['commentcontent']))
+    conn.commit()
     cursor.close()
 
 
-def savetext(result):
+def savetext(result):              #以文本储存
     path = 'c:\\users\\administrator\\desktop\\spider_save.txt'
     if os.path.isfile(path):
         with open(path, 'a', encoding='utf-8') as f:
-            f.write('+'*30+'\r\n'+result['username']+'\r\n'+result['userurl']+'\r\n'+result['commentcontent']+'\r\n'+result['commentdate']+'\r\n')
+            f.write('-'*70+'\r\n'+result['username']+'\r\n'+result['userurl']+'\r\n'+result['commentcontent']+'\r\n'+result['commentdate']+'\r\n')
     else:
         with open(path, 'w', encoding='utf-8') as f:
-            f.write('+'*30+'\r\n'+result['username']+'\r\n'+result['userurl']+'\r\n'+result['commentcontent']+'\r\n'+result['commentdate']+'\r\n')
+            f.write('-'*70+'\r\n'+result['username']+'\r\n'+result['userurl']+'\r\n'+result['commentcontent']+'\r\n'+result['commentdate']+'\r\n')
 
 
-global urls  #用于保存第一次调用spider时的url，供获取下一页链接使用
+global urls                     #urls用于保存第一次调用spider时的url，供获取下一页链接使用
 urls = ''
 def spider(url,flag=False):
 
@@ -46,35 +48,61 @@ def spider(url,flag=False):
     html = requests.get(url, headers=headers)
     html.encoding = 'utf-8'
     convertxml = etree.HTML(html.text)
-    extract = convertxml.xpath('//*[@class="comment"]')
+    extract = convertxml.xpath('//*[@class="comment-item"]')
     result = {}
 
     for each in extract:
-        result['username'] = each.xpath('h3/span[2]/a/text()')[0].strip()
-        result['userurl'] = each.xpath('h3/span[2]/a/@href')[0].strip()
-        result['commentcontent'] = each.xpath('p/text()')[0].strip()
+        temp = each.xpath('h3/span[2]/a/text()')
+        if temp:
+            result['username'] = temp[0].strip()
+        else:
+            result['username'] = ''
+
+        temp = each.xpath('h3/span[2]/a/@href')
+        if temp:
+            result['userurl'] = temp[0].strip()
+        else:
+            result['userurl'] = ''
+
+        temp = each.xpath('p/text()')
+        if temp:
+            result['commentcontent'] = temp[0].strip()
+        else:
+            result['commentcontent'] = ''
+
         try:
-            result['commentdate'] = each.xpath('h3/span[2]/span[2]/text()')[0].strip()  #发帖时间在豆瓣位置是有变化的
+            temp = each.xpath('h3/span[2]/span[2]/text()')  #发帖时间在豆瓣位置是有变化的
         except:
-            result['commentdate'] = each.xpath('h3/span[2]/span[1]/text()')[0].strip()
-        savetext(result)
-        print('dd')
-        #insert_mysql(conn, result['commentdate'], result['username'], result['userurl'], result['commentcontent']) # insert records into mysql
+            temp = each.xpath('h3/span[2]/span[1]/text()')
+        finally:
+            if temp:
+                result['commentdate'] = temp[0].strip()
+            else:
+                result['commentdate'] = '1970-1-1'
+        #savetext(result)
+        print(result['username'])
+        insert_mysql(conn, **result) # insert records into mysql
     conn.close()
-    nextpage = convertxml.xpath('//*[@class="next"]/@href')
+
+    nextpage = convertxml.xpath('//*[@class="comments-wrapper"]/div[3]/ul/ul/li[3]/a/@href')   #获取下一页链接标志
+    if not nextpage:
+        nextpage = convertxml.xpath('//*[@class="comments-wrapper"]/div[3]/ul/li[3]/a/@href')
+
     if nextpage:
         print(urls + nextpage[0])
+        time.sleep(1)
         spider(urls + nextpage[0], True)
     else:
-        print('no.....')
+        print('over...')
+        return True
 
 
 if __name__ == '__main__':
-    #spider('http://movie.douban.com/subject/3338862/comments')
-    st = time.time()
-    pool = Pool(2)
-    pool.map(spider, ['http://movie.douban.com/subject/3338862/comments'])
-    pool.close()
-    pool.join()
-    usedtime = time.time() - st
-    print('used time:%2fs'% usedtime)
+    spider('http://book.douban.com/subject/26575812/comments/')
+    # st = time.time()
+    # pool = Pool(2)
+    # pool.map(spider, ['http://movie.douban.com/subject/3338862/comments'])
+    # pool.close()
+    # pool.join()
+    # usedtime = time.time() - st
+    # print('used time:%2fs'% usedtime)
