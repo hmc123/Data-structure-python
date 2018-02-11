@@ -1,0 +1,138 @@
+#冷却壁镶砖计算程序，目前还只能更具输入的各层弦长计算每层各类型砖的块数，还没发做到自动把具体的排列方式计算出来，虽然已经写了点接口，但是计算量太大，是无解的
+import random
+import math
+import copy
+def Slayer_brick(a,b,c,d,e,f,p):     #单层计算，a\b\c为普通砖宽度，d\e为两端特殊砖误差，f为砖缝，p为总误差控制
+    cc=100                  #初始化实时误差
+    n1=0
+    n2=0
+    n3=0
+    cc_temp=10                  #初始化误差
+    for i in range(0,10):
+        for j in range(0,11):
+            for k in range(0,12):
+                cc = abs(p-(i*a+j*b+k*c+d+e+(i+j+k+2-1)*f))
+                if 0<=cc<=5:
+                    if cc<cc_temp:
+                        n1=i
+                        n2=j
+                        n3=k
+                        cc_temp=cc
+                        #print(n1,n2,n3,cc_temp)     #print all suitable value
+    print(n1,n2,n3,"    ",cc_temp)                        #just select a perfect plan which have a min cc value
+    return [n1,n2,n3]
+def Mlayer_brick(a,b,c,d,e,f,x):    #整块冷却壁多层计算，x为一块冷却壁每层弦长的集合
+    Calbrick_result = []
+    for n in x:
+        Calbrick_result.append(Slayer_brick(a,b,c,d,e,f,n))
+    print(Calbrick_result)
+    return Calbrick_result
+def sort_brick(a,b,c,d,e,f,L_collection,tolerance):      #得到砖型排序列表,计算砖缝坐标并记录进列表
+    Calbrick_result = Mlayer_brick(a,b,c,d,e,f,L_collection)    #得到所有层各类型砖数量矩阵
+    storageresult = []
+    gapresult = []
+    
+    for i in range(0,len(L_collection)):   #按层分别计算排列顺序
+        
+        if 0 == i:
+            x = Calbrick_result[0]
+            s = []
+            g = []
+            g1 = -L_collection[0]/2+d+f
+            
+            while sum(x) is not 0:
+                randnum = random.randint(0,2)            #随机选一种砖
+                g1 = g1+translatorA(a,b,c,randnum)+f
+                
+                if x[randnum] is not 0:
+                    s.append(randnum)
+                    g.append(g1)
+                    x[randnum] = x[randnum]-1
+                else:
+                    g1 = g1-translatorA(a,b,c,randnum)-f
+            storageresult.append(s)
+            gapresult.append(g)
+            
+        else:
+            if i % 2 == 0:
+                count = -1        
+                while count < 0:
+                    x = copy.deepcopy(Calbrick_result[i])
+                    s = []
+                    g = []
+                    g1 = -L_collection[i]/2+d+f
+                    count = 20                                    #每层计算最多可迭代次数，否则就得从第一块开始重新排列
+                    while sum(x) is not 0:
+                        randnum = random.randint(0,2)
+                        g1 = g1+translatorA(a,b,c,randnum)+f
+                        
+                        if x[randnum] is not 0 and checkgap(gapresult[i-1],g1,tolerance):     
+                            s.append(randnum)
+                            g.append(g1)
+                            x[randnum] = x[randnum]-1
+                                     
+                        else:
+                            g1 = g1-translatorA(a,b,c,randnum)-f
+                            count = -1
+                            #if count < 0:
+                            break
+                            
+                storageresult.append(s)
+                gapresult.append(g)
+                
+            else:
+                count = -1
+                while count < 0:
+                    x = copy.deepcopy(Calbrick_result[i])
+                    s = []
+                    g = []
+                    g1 = -L_collection[i]/2+e+f
+                    count = 20
+                    while sum(x) is not 0:
+                        randnum = random.randint(0,2)
+                        g1 = g1+translatorA(a,b,c,randnum)+f
+                        
+                        if x[randnum] is not 0 and checkgap(gapresult[i-1],g1,tolerance):     
+                            s.append(randnum)
+                            g.append(g1)
+                            x[randnum] = x[randnum]-1
+                                     
+                        else:
+                            g1 = g1-translatorA(a,b,c,randnum)-f
+                            count = -1
+                            #if count < 0:
+                            break
+                            
+                storageresult.append(s)
+                gapresult.append(g)
+    return(storageresult,gapresult)
+                
+def checkgap(lastlayer_gaplist,curgap,tolerance):
+    mingap = 10000
+    for i in lastlayer_gaplist:
+        mingap = min(abs(i-curgap),mingap)
+    if mingap < tolerance:
+        #print("砖缝间距不够！！！重新计算",mingap)
+        return False
+    else:
+        #print("最小错缝",mingap)
+        return True
+    
+def translatorA(a,b,c,type_brick):
+    #a,b,c,为三种砖长度
+    if type_brick == 0:
+        return a
+    elif type_brick == 1:
+        return b
+    else:
+        return c
+#width list of every layer of coolstave
+L_collection = [955.5,950.2,945,939.7,934.5,929.2,924,918.7,913.5,908.2,903,897.7,892.4,887.2]                              
+print("-------------冷却壁镶砖计算--------------")
+(a,b) = sort_brick(98,93,83,75,95,2,L_collection,15)
+print("******************排砖顺序***************")
+for i in a:
+    print(i)
+print("******************砖缝坐标***************")
+for i in b:
+    print(i)
